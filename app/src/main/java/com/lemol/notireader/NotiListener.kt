@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.Notification.Action
 import android.app.RemoteInput
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -30,6 +29,16 @@ class NotiListener : NotificationListenerService() {
         // Contents of the notification in such form: "sender : message"
         val contents = sbn!!.notification.tickerText.toString()
 
+        val extras = sbn.notification.extras
+        // val sender = extras.getString(Notification.EXTRA_TITLE)
+        val text = extras.getCharSequence(Notification.EXTRA_TEXT)
+        // val chatroomName = extras.getCharSequence(Notification.EXTRA_SUB_TEXT) // null if PM
+        val commArgv = text?.split(" ")
+        val comm = commArgv?.get(0)
+
+        // Log.d("NOTI_LISTENER", sbn.packageName + Notification.WearableExtender(sbn.notification).actions.toString())
+        // Log.d("NOTI_LISTENER", activeNotifications.toString())
+
         if (sbn.packageName.equals("com.kakao.talk")) {
             // Log.d("NOTI_LISTENER", "(KakaoTalk) $contents")
 
@@ -39,25 +48,22 @@ class NotiListener : NotificationListenerService() {
             // Needs to be installed prior to usage
             // https://play.google.com/store/apps/details?id=com.google.android.wearable.app
 
-
             val noti = Notification.WearableExtender(sbn.notification).actions
 
             // Check for Android API level 24 (Android 7.0) or above
-            if (Build.VERSION.SDK_INT >= 24){
-                var noti = sbn!!.notification.actions
-            }
+            // if (Build.VERSION.SDK_INT >= 24){
+            //     var noti = sbn!!.notification.actions
+            // }
 
             // This loop seeks for possible actions within the notification
             for (action in noti) {
-                if (action.remoteInputs != null && action.remoteInputs.isNotEmpty()) {
-                    if (action.title.toString().toLowerCase().contains("reply") ||
-                            action.title.toString().toLowerCase().contains("답장") &&
-
-                            // If the message contains "/start"
-                            contents.contains("/start")) {
-
-                        // Do stuffs here
-                        actionReply(action, "Auto Reply")
+                if (!action.remoteInputs.isNullOrEmpty() &&
+                        (action.title.toString().contains("reply", true) ||
+                                action.title.toString().contains("답장"))) {
+                    when (comm) {
+                        "/start" -> {
+                            actionReply(action, "Auto Reply")
+                        }
                     }
                 }
             }
